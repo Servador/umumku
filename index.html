@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UMUMKU — ATK & CS Perhutani</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN 1: LOGIN
+     ============================================================ -->
+<div id="screen-login" class="screen active">
+  <div class="login-bg"><div class="login-grid"></div></div>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-badge">PERHUTANI · JAWA TIMUR</div>
+      <h1 class="login-title">UMUMKU<span class="accent">ATK</span></h1>
+      <p class="login-sub">Sistem Permintaan ATK & Computer Supply — Perhutani Jatim</p>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="inp-user" placeholder="Masukkan username…" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="Masukkan password…"/>
+      </div>
+      <div id="login-error" class="login-error hidden">Username atau password salah!</div>
+      <button class="btn-primary full" onclick="doLogin()">MASUK →</button>
+      <div class="login-hint">
+        <span>Admin: <code>admin / admin123</code></span>
+        <span>User: <code>user / user123</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 2: APP
+     ============================================================ -->
+<div id="screen-app" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">
+        <span class="logo-badge">ATK</span>
+        <div>
+          <div class="logo-name">UMUMKU</div>
+          <div class="logo-sub">Perhutani Jatim</div>
+        </div>
+      </div>
+      <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showSection('dashboard')">
+        <span class="nav-icon">⊞</span> Dashboard
+      </a>
+      <div class="nav-group-label">Katalog Barang</div>
+      <a class="nav-item" onclick="showSection('produk'); setKategori('ATK')">
+        <span class="nav-icon">✏️</span> ATK
+      </a>
+      <a class="nav-item" onclick="showSection('produk'); setKategori('CS')">
+        <span class="nav-icon">🖨️</span> Computer Supply
+      </a>
+      <div class="nav-group-label">Laporan</div>
+      <a class="nav-item" onclick="showSection('rekap')">
+        <span class="nav-icon">▦</span> Rekap Permintaan
+      </a>
+      <a class="nav-item admin-only hidden" onclick="showSection('kelola')">
+        <span class="nav-icon">⊕</span> Kelola Barang
+      </a>
+      <div class="nav-group-label">Bantuan</div>
+      <a class="nav-item" onclick="showTutorial()">
+        <span class="nav-icon">📖</span> Tutorial
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div>
+          <div class="user-name" id="sidebar-uname">–</div>
+          <div class="user-role" id="sidebar-role">–</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <button class="btn-tutorial" onclick="showTutorial()">📖 Tutorial</button>
+        <span class="badge-role" id="topbar-role">–</span>
+        <div class="topbar-sesi" id="topbar-sesi"></div>
+      </div>
+    </header>
+
+    <!-- ── SECTION: DASHBOARD ───────────────────────── -->
+    <section id="sec-dashboard" class="section active">
+      <div class="section-header">
+        <h2>Dashboard <span>Overview</span></h2>
+      </div>
+
+      <!-- BANNER WAJIB PILIH DIVISI -->
+      <div id="banner-divisi" class="banner-divisi-required">
+        <div class="banner-icon">⚠️</div>
+        <div class="banner-text">
+          <strong>Wajib: Pilih Divisi & Bulan terlebih dahulu</strong>
+          <span>Isi form di bawah ini sebelum memilih barang agar data tercatat dengan benar</span>
+        </div>
+        <div class="banner-arrow">↓</div>
+      </div>
+
+      <!-- SETUP CARD — pilih divisi & bulan -->
+      <div class="setup-card" id="setup-card">
+        <div class="setup-head">
+          <div class="setup-icon">⚙️</div>
+          <div>
+            <div class="setup-title">Atur Sesi Permintaan</div>
+            <div class="setup-sub">Wajib diisi sebelum memilih barang</div>
+          </div>
+          <div id="setup-status" class="setup-status pending">Belum lengkap</div>
+        </div>
+        <div class="setup-fields">
+          <div class="setup-field">
+            <label>Divisi / Bagian</label>
+            <select id="sel-division" onchange="setDivision(this.value)">
+              <option value="">— Pilih Divisi —</option>
+              <option value="UMUM">Umum</option>
+              <option value="SDM">SDM</option>
+              <option value="SEKSI ANGGARAN">Seksi Anggaran</option>
+              <option value="SEKSI AKUTANSI">Seksi Akuntansi</option>
+              <option value="SEKSI ANALISA DATA">Seksi Analisa Data</option>
+              <option value="SARPRA">Sarpra</option>
+              <option value="PSDH">PSDH</option>
+              <option value="HUKUM">Hukum</option>
+              <option value="PRODUKSI">Produksi</option>
+              <option value="IT">IT</option>
+            </select>
+          </div>
+          <div class="setup-field">
+            <label>Bulan</label>
+            <select id="sel-bulan" onchange="setBulan(this.value)">
+              <option value="">— Pilih Bulan —</option>
+              <option value="JANUARI">Januari</option>
+              <option value="FEBRUARI">Februari</option>
+              <option value="MARET">Maret</option>
+              <option value="APRIL">April</option>
+              <option value="MEI">Mei</option>
+              <option value="JUNI">Juni</option>
+              <option value="JULI">Juli</option>
+              <option value="AGUSTUS">Agustus</option>
+              <option value="SEPTEMBER">September</option>
+              <option value="OKTOBER">Oktober</option>
+              <option value="NOVEMBER">November</option>
+              <option value="DESEMBER">Desember</option>
+            </select>
+          </div>
+          <div class="setup-field">
+            <label>Tahun</label>
+            <select id="sel-tahun" onchange="setTahun(this.value)">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button class="btn-primary" onclick="mulaiPilihBarang('ATK')">✏️ Mulai Pilih ATK →</button>
+          <button class="btn-secondary" onclick="mulaiPilihBarang('CS')">🖨️ Mulai Pilih CS →</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-val" id="stat-produk">0</div>
+          <div class="stat-lbl">Total Produk</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗂️</div>
+          <div class="stat-val" id="stat-rekap">0</div>
+          <div class="stat-lbl">Item Dipilih</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" id="stat-total">Rp 0</div>
+          <div class="stat-lbl">Total Anggaran</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏢</div>
+          <div class="stat-val" id="stat-divisi">–</div>
+          <div class="stat-lbl">Divisi Aktif</div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h3>Aksi Cepat</h3>
+        <div class="qa-grid">
+          <button class="qa-btn" onclick="mulaiPilihBarang('ATK')">
+            <span>✏️</span> Pilih Barang ATK
+          </button>
+          <button class="qa-btn" onclick="mulaiPilihBarang('CS')">
+            <span>🖨️</span> Pilih Computer Supply
+          </button>
+          <button class="qa-btn" onclick="showSection('rekap')">
+            <span>▦</span> Lihat Rekap
+          </button>
+          <button class="qa-btn" onclick="exportToSheet()">
+            <span>↑</span> Kirim ke Spreadsheet
+          </button>
+          <button class="qa-btn" onclick="exportCSV()">
+            <span>⬇</span> Download CSV
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: KATALOG PRODUK ─────────────────── -->
+    <section id="sec-produk" class="section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2 id="produk-title">Katalog <span>ATK</span></h2>
+          <div class="kategori-tabs">
+            <button id="tab-atk" class="tab-btn active" onclick="setKategori('ATK')">✏️ ATK</button>
+            <button id="tab-cs"  class="tab-btn"        onclick="setKategori('CS')">🖨️ Computer Supply</button>
+          </div>
+        </div>
+        <div class="section-tools">
+          <input type="text" id="search-produk" placeholder="Cari barang…" oninput="renderProducts()"/>
+        </div>
+      </div>
+
+      <!-- Info sesi aktif -->
+      <div class="sesi-bar">
+        <span>Divisi: <strong id="sesi-divisi">–</strong></span>
+        <span>Bulan: <strong id="sesi-bulan">–</strong></span>
+        <span>Tahun: <strong id="sesi-tahun">–</strong></span>
+        <button class="sesi-change" onclick="showSection('dashboard')">✎ Ubah Sesi</button>
+      </div>
+
+      <div id="notif-division" class="notif-warn hidden">
+        ⚠️ Divisi atau Bulan belum dipilih!
+        <button onclick="showSection('dashboard')" class="notif-btn">→ Atur di Dashboard</button>
+      </div>
+
+      <div id="product-grid" class="product-grid"></div>
+    </section>
+
+    <!-- ── SECTION: REKAP ──────────────────────────── -->
+    <section id="sec-rekap" class="section">
+      <div class="section-header">
+        <div>
+          <h2>Rekap <span>Permintaan</span></h2>
+          <div class="rekap-meta" id="rekap-meta">–</div>
+        </div>
+        <div class="section-tools">
+          <button class="btn-secondary" onclick="clearRekap()">🗑 Bersihkan</button>
+          <button class="btn-primary"   onclick="exportToSheet()">↑ Kirim ke Sheet</button>
+          <button class="btn-secondary" onclick="exportCSV()">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="rekap-tabs">
+        <button id="rekaptab-atk" class="tab-btn active" onclick="setRekapTab('ATK')">✏️ ATK</button>
+        <button id="rekaptab-cs"  class="tab-btn"        onclick="setRekapTab('CS')">🖨️ Computer Supply</button>
+        <button id="rekaptab-all" class="tab-btn"        onclick="setRekapTab('ALL')">📋 Semua</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="rekap-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Jenis Barang</th>
+              <th>Tarif (Rp)</th>
+              <th>Bagian / Bidang</th>
+              <th class="group-header" colspan="3">Permintaan</th>
+              <th class="group-header" colspan="3">Koreksi Umum</th>
+              <th>Ket</th>
+              <th>Aksi</th>
+            </tr>
+            <tr class="sub-header">
+              <th></th><th></th><th></th><th></th>
+              <th>Vol</th><th>Sat</th><th>Rp</th>
+              <th>Vol</th><th>Sat</th><th>Rp</th>
+              <th></th><th></th>
+            </tr>
+          </thead>
+          <tbody id="rekap-body"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6" class="total-label">TOTAL ANGGARAN</td>
+              <td id="total-permintaan-rp" class="total-val">Rp 0</td>
+              <td colspan="2"></td>
+              <td id="total-koreksi-rp" class="total-val">Rp 0</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION: KELOLA BARANG (Admin) ────────── -->
+    <section id="sec-kelola" class="section admin-only hidden">
+      <div class="section-header">
+        <h2>Kelola <span>Barang</span></h2>
+        <div class="section-tools">
+          <div class="kategori-tabs">
+            <button id="kelola-tab-atk" class="tab-btn active" onclick="setKelolaTab('ATK')">✏️ ATK</button>
+            <button id="kelola-tab-cs"  class="tab-btn"        onclick="setKelolaTab('CS')">🖨️ CS</button>
+          </div>
+          <button class="btn-primary" onclick="openAddModal()">⊕ Tambah Barang</button>
+        </div>
+      </div>
+      <div id="kelola-list" class="kelola-list"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL: TAMBAH/EDIT BARANG -->
+<div id="modal-barang" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modal-title">Tambah Barang</h3>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modal-id"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kategori</label>
+          <select id="modal-kategori">
+            <option value="ATK">ATK (Alat Tulis Kantor)</option>
+            <option value="CS">CS (Computer Supply)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Satuan</label>
+          <input type="text" id="modal-satuan" placeholder="Pcs / Rim / Box…"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nama Barang</label>
+        <input type="text" id="modal-nama" placeholder="Contoh: Kertas HVS A4 70 Gram"/>
+      </div>
+      <div class="form-group">
+        <label>Harga Satuan (Rp)</label>
+        <input type="number" id="modal-harga" placeholder="Contoh: 48500"/>
+      </div>
+      <div class="form-group">
+        <label>URL Gambar <span style="color:var(--text-3);font-weight:400">(Google Drive / URL langsung / kosongkan = ikon default)</span></label>
+        <input type="text" id="modal-gambar"
+               placeholder="https://drive.google.com/file/d/…/view  ATAU  https://…/gambar.jpg"
+               oninput="previewGambar(this.value)"/>
+      </div>
+      <div id="modal-img-preview" class="img-preview hidden">
+        <img id="preview-img" src="" alt="preview"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn-primary"   onclick="saveBarang()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PILIH QTY -->
+<div id="modal-qty" class="modal-overlay hidden">
+  <div class="modal-card small">
+    <div class="modal-header">
+      <h3>Tambah ke Permintaan</h3>
+      <button onclick="closeQtyModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="qty-product-name" class="qty-pname"></p>
+      <div class="form-group">
+        <label>Volume / Jumlah</label>
+        <input type="number" id="qty-input" value="1" min="1"/>
+      </div>
+      <div class="form-group">
+        <label>Keterangan (opsional)</label>
+        <input type="text" id="qty-ket" placeholder="Misal: Untuk rapat Q2…"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeQtyModal()">Batal</button>
+      <button class="btn-primary"   onclick="confirmAddToRekap()">⊕ Tambahkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TUTORIAL -->
+<div id="modal-tutorial" class="modal-overlay hidden">
+  <div class="modal-card tutorial-card">
+    <div class="modal-header">
+      <h3>📖 Panduan Penggunaan UMUMKU</h3>
+      <button onclick="closeTutorial()">✕</button>
+    </div>
+    <div class="modal-body tutorial-body">
+
+      <!-- TAB NAV -->
+      <div class="tut-tabs">
+        <button class="tut-tab active" onclick="switchTutTab('penggunaan', this)">🖥️ Cara Pakai</button>
+        <button class="tut-tab" onclick="switchTutTab('gambar', this)">🖼️ Upload Gambar</button>
+        <button class="tut-tab" onclick="switchTutTab('appscript', this)">📊 Apps Script</button>
+        <button class="tut-tab" onclick="switchTutTab('format', this)">📋 Format Excel</button>
+      </div>
+
+      <!-- TAB: CARA PAKAI -->
+      <div id="tut-penggunaan" class="tut-content active">
+        <div class="tut-step">
+          <div class="tut-num">1</div>
+          <div>
+            <div class="tut-step-title">Login ke aplikasi</div>
+            <div class="tut-step-desc">Gunakan akun yang sudah diberikan. Contoh: <code>admin / admin123</code> atau sesuai bagian Anda.</div>
+          </div>
+        </div>
+        <div class="tut-step highlight-step">
+          <div class="tut-num">2</div>
+          <div>
+            <div class="tut-step-title">⚠️ Pilih Divisi & Bulan di Dashboard (WAJIB pertama!)</div>
+            <div class="tut-step-desc">Setelah login, langsung isi <strong>Divisi/Bagian</strong> dan <strong>Bulan</strong> di kartu "Atur Sesi Permintaan". Data tidak akan tersimpan dengan benar jika langkah ini dilewati.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">3</div>
+          <div>
+            <div class="tut-step-title">Pilih kategori: ATK atau Computer Supply (CS)</div>
+            <div class="tut-step-desc">Klik tombol <strong>"✏️ Mulai Pilih ATK"</strong> atau <strong>"🖨️ Mulai Pilih CS"</strong> dari Dashboard, atau klik menu di sidebar kiri.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">4</div>
+          <div>
+            <div class="tut-step-title">Pilih barang dan masukkan jumlah</div>
+            <div class="tut-step-desc">Klik kartu barang → isi jumlah (volume) → klik Tambahkan. Ulangi untuk semua barang yang dibutuhkan.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">5</div>
+          <div>
+            <div class="tut-step-title">Cek di Rekap Permintaan</div>
+            <div class="tut-step-desc">Buka menu <strong>Rekap Permintaan</strong> untuk melihat semua pilihan. Anda bisa edit volume atau koreksi langsung di tabel.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">6</div>
+          <div>
+            <div class="tut-step-title">Kirim ke Google Spreadsheet atau Download CSV</div>
+            <div class="tut-step-desc">Klik <strong>"↑ Kirim ke Sheet"</strong> untuk langsung kirim ke Google Spreadsheet (butuh setup Apps Script dulu), atau <strong>"⬇ CSV"</strong> untuk download file.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: GAMBAR -->
+      <div id="tut-gambar" class="tut-content">
+        <div class="tut-alert">
+          <strong>⚠️ Mengapa gambar tidak muncul dari Google Drive?</strong><br>
+          Google Drive "uc?export=view" sering diblok oleh browser karena CORS. Aplikasi ini sudah menggunakan <strong>Thumbnail API Google</strong> yang jauh lebih stabil untuk file publik.
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">1</div>
+          <div>
+            <div class="tut-step-title">Pastikan gambar sudah di-share "Anyone with the link"</div>
+            <div class="tut-step-desc">Klik kanan file di Drive → <strong>Share</strong> → ubah ke <strong>Anyone with the link → Viewer</strong> → Done. Ini wajib agar gambar bisa tampil.</div>
+          </div>
+        </div>
+        <div class="tut-step highlight-step">
+          <div class="tut-num">2</div>
+          <div>
+            <div class="tut-step-title">Paste URL Drive biasa — otomatis dikonversi!</div>
+            <div class="tut-step-desc">
+              Cukup paste URL Drive biasa saat tambah/edit barang:<br>
+              <code>https://drive.google.com/file/d/1ZiCBd3TOV6nUWlUABfMZ7Paq0jvHGDUE/view</code><br>
+              Aplikasi otomatis mengubah ke format Thumbnail API:<br>
+              <code>https://drive.google.com/thumbnail?id=FILE_ID&sz=s400</code><br>
+              <span style="color:var(--success)">✅ Format ini bekerja tanpa CORS issue di semua browser.</span>
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">3</div>
+          <div>
+            <div class="tut-step-title">Gambar masih tidak muncul? Tambah manual di app.js</div>
+            <div class="tut-step-desc">
+              Buka file <code>app.js</code>, cari array <code>DEFAULT_PRODUCTS</code>, lalu isi kolom <code>gambar</code> langsung dengan URL thumbnail:<br>
+              <code>gambar: "https://drive.google.com/thumbnail?id=FILE_ID_ANDA&sz=s400"</code><br>
+              Ganti <code>FILE_ID_ANDA</code> dengan ID file dari URL Drive Anda.
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">4</div>
+          <div>
+            <div class="tut-step-title">Alternatif paling stabil: ImgBB</div>
+            <div class="tut-step-desc">Upload ke <strong>imgbb.com</strong> → salin "Direct Link" (berakhiran .jpg/.png) → paste ke kolom gambar. URL ini tidak punya masalah CORS sama sekali.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: APPS SCRIPT -->
+      <div id="tut-appscript" class="tut-content">
+        <div class="tut-alert">
+          <strong>⚡ 2 Spreadsheet Output!</strong><br>
+          Data dikirim ke 2 spreadsheet sekaligus: (1) Per Divisi — tiap divisi punya tabel sendiri, (2) Semua Divisi — semua divisi digabung dalam 1 sheet bulan. Format sama persis dengan Excel Perhutani.
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">1</div>
+          <div>
+            <div class="tut-step-title">Buat 2 Google Spreadsheet baru</div>
+            <div class="tut-step-desc">Buat 2 spreadsheet kosong di Google Drive. Contoh nama: <code>UMUMKU — Per Divisi</code> dan <code>UMUMKU — Semua Divisi</code>. Sheet di dalam akan dibuat otomatis.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">2</div>
+          <div>
+            <div class="tut-step-title">Ambil ID dari kedua spreadsheet</div>
+            <div class="tut-step-desc">
+              Dari URL masing-masing spreadsheet, ambil bagian ID-nya:<br>
+              <code>https://docs.google.com/spreadsheets/d/<strong>ID_INI</strong>/edit</code>
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">3</div>
+          <div>
+            <div class="tut-step-title">Buka Apps Script dari salah satu spreadsheet</div>
+            <div class="tut-step-desc">Klik menu <strong>Extensions → Apps Script</strong>. Hapus semua kode yang ada, paste kode dari file <code>Code.gs</code> yang sudah didownload.</div>
+          </div>
+        </div>
+        <div class="tut-step highlight-step">
+          <div class="tut-num">4</div>
+          <div>
+            <div class="tut-step-title">Isi 2 ID spreadsheet di bagian atas kode</div>
+            <div class="tut-step-desc">
+              Di baris paling atas Code.gs, ganti 2 nilai ini:<br>
+              <code>const ID_SPREADSHEET_PER_DIVISI  = "ID_SPREADSHEET_1";</code><br>
+              <code>const ID_SPREADSHEET_SEMUA_DIVISI = "ID_SPREADSHEET_2";</code>
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">5</div>
+          <div>
+            <div class="tut-step-title">Deploy sebagai Web App</div>
+            <div class="tut-step-desc">
+              <strong>Deploy → New Deployment → Web App</strong><br>
+              Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong><br>
+              → Klik <strong>Deploy</strong> → salin URL yang muncul.
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">6</div>
+          <div>
+            <div class="tut-step-title">Tempel URL ke file app.js</div>
+            <div class="tut-step-desc">
+              Buka <code>app.js</code>, cari:<br>
+              <code>const APPS_SCRIPT_URL = "GANTI_DENGAN_URL...";</code><br>
+              Ganti dengan URL deployment tadi. Simpan.
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- TAB: FORMAT EXCEL -->
+      <div id="tut-format" class="tut-content">
+        <div class="tut-alert">
+          Output dari web <strong>sama persis</strong> dengan format Excel Perhutani — 3 baris judul, header kolom, data per divisi dengan subtotal, dan grand total di bawah.
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">📄</div>
+          <div>
+            <div class="tut-step-title">Struktur setiap sheet (ATK atau CS per Bulan)</div>
+            <div class="tut-step-desc">
+              <div class="format-table">
+                <div class="format-row header-row"><span colspan="11">REKAPITULASI PEMBELIAN ALAT TULIS KANTOR (ATK)</span></div>
+                <div class="format-row header-row"><span colspan="11">KANTOR DIVISI REGIONAL JAWA TIMUR</span></div>
+                <div class="format-row header-row"><span colspan="11">BULAN APRIL TAHUN 2026</span></div>
+                <div class="format-row header-row">
+                  <span>NO</span><span>JENIS BARANG</span><span>TARIF</span><span>BAGIAN</span>
+                  <span>VOL</span><span>SAT</span><span>Rp</span>
+                  <span>VOL</span><span>SAT</span><span>Rp</span><span>KET</span>
+                </div>
+                <div class="format-row"><span>1</span><span>KERTAS A4 70gr</span><span>48.500</span><span>HUKUM</span><span>5</span><span>RIM</span><span>242.500</span><span>2</span><span>RIM</span><span>97.000</span><span></span></div>
+                <div class="format-row"><span>2</span><span>BOLPOINT JOYCO</span><span>3.500</span><span></span><span>12</span><span>RIM</span><span>42.000</span><span>6</span><span>RIM</span><span>21.000</span><span></span></div>
+                <div class="format-row" style="background:var(--accent-dim);color:var(--accent)"><span></span><span>SUBTOTAL HUKUM</span><span></span><span></span><span></span><span></span><span>1.069.700</span><span></span><span></span><span>567.200</span><span></span></div>
+                <div class="format-row"><span>1</span><span>KERTAS A4 70gr</span><span>48.500</span><span>UMUM</span><span>5</span><span>RIM</span><span>242.500</span><span>4</span><span>RIM</span><span>194.000</span><span></span></div>
+                <div class="format-row" style="background:var(--accent-dim);color:var(--accent)"><span></span><span>SUBTOTAL UMUM</span><span></span><span></span><span></span><span></span><span>716.900</span><span></span><span></span><span>647.700</span><span></span></div>
+                <div class="format-row" style="background:var(--bg-card2);color:var(--accent2);font-weight:700"><span></span><span>TOTAL KESELURUHAN</span><span></span><span></span><span></span><span></span><span>4.904.300</span><span></span><span></span><span>3.181.300</span><span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">📂</div>
+          <div>
+            <div class="tut-step-title">Nama sheet otomatis</div>
+            <div class="tut-step-desc">Sheet dibuat otomatis dengan nama <code>ATK - APRIL 2026</code> dan <code>CS - APRIL 2026</code> sesuai bulan yang dipilih. Tidak perlu buat sheet manual.</div>
+          </div>
+        </div>
+        <div class="tut-step">
+          <div class="tut-num">⚡</div>
+          <div>
+            <div class="tut-step-title">Urutan kirim yang benar</div>
+            <div class="tut-step-desc">Pilih Divisi & Bulan → Pilih barang ATK → Pilih barang CS → Cek Rekap → <strong>Kirim ke Sheet sekali klik</strong>. Data ATK dan CS terpisah otomatis ke sheet masing-masing di kedua spreadsheet.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeTutorial()">Mengerti ✓</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>
